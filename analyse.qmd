@@ -1,0 +1,99 @@
+---
+title: "Analyse Exploratoire - Projet Demos"
+author: "Bruno Coulet"
+format: html
+editor: visual
+---
+
+## 1. Configuration de l'environnement
+
+Chargement des outils nécessaires.
+
+```{r}
+#| label: setup
+#| message: false
+
+library(tidyverse)
+library(renv)
+```
+
+### Restaure l'état des packages si besoin
+```{r}
+# renv::restore()
+```
+
+### Chargement des données
+
+```{r}
+#| label: load-data
+
+df <- read_csv("raw_data/data_abs.csv")
+
+# Petit aperçu rapide
+glimpse(df)
+```
+
+### Analyse Univariée (Individuelle)
+
+```{r}
+#| label: plot-univarie Ouvrier
+
+ggplot(df, aes(x = Ouvrier)) +
+  geom_histogram(fill = "steelblue", bins = 30) +
+  theme_minimal() +
+  labs(title = "Distribution de la variable", y = "Fréquence")
+```
+
+### Transformation des données en 2 colonnes : Variable/valeur
+
+```{r}
+df_long <- df %>%
+select(where(is.numeric)) %>% # On ne garde que les chiffres
+pivot_longer(cols = everything(), names_to = "Variables", values_to = "Valeurs")
+```
+
+### création d'un qui affiche toutes les variables
+
+```{r}
+ ggplot(df_long, aes(x = Valeurs)) +
+     geom_histogram(fill = "steelblue", bins = 20) +
+     facet_wrap(~ Variables, scales = "free") + # "free" permet à chaque axe X/Y de s'adapter
+     theme_minimal() +
+     labs(title = "Distribution de toutes mes variables numériques",
+          y = "Fréquence",
+          x = "Valeurs")
+```
+
+### 4. Analyse Univariée Globale (Toutes les variables)
+
+```{r}
+#| label: plot-all-numeric
+#| message: false
+#| warning: false
+
+df %>%
+  # 1. On ne garde que les colonnes numériques
+  select(where(is.numeric)) %>%
+  
+  # 2. On transforme le tableau pour avoir toutes les variables l'une sous l'autre
+  # 'cols = everything()' prend toutes les colonnes numériques sélectionnées
+  pivot_longer(cols = everything(), 
+               names_to = "variable", 
+               values_to = "valeur") %>%
+  
+  # 3. On crée le graphique
+  ggplot(aes(x = valeur)) +
+  geom_histogram(fill = "steelblue", color = "white", bins = 30) +
+  
+  # 4. C'est ici que la magie opère : on crée un sous-graphique par variable
+  # scales = "free" permet à chaque axe X/Y de s'adapter à la variable
+  facet_wrap(~ variable, scales = "free") +
+  
+  theme_minimal() +
+  labs(
+    title = "Distribution de toutes mes variables numériques",
+    subtitle = "Analyse univariée en un seul coup d'œil",
+    x = "Valeurs",
+    y = "Fréquence"
+  )
+```
